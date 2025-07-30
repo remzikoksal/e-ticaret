@@ -1,4 +1,3 @@
-
 import React from "react";
 import img1 from "../assets/featured1.jpg";
 import img2 from "../assets/featured2.jpg";
@@ -42,18 +41,17 @@ const FeaturedProducts = () => {
     <div className="py-16 px-4 text-center bg-white">
       <p className="text-sm text-blue-500 font-semibold">Practice Advice</p>
       <h2 className="text-3xl font-bold text-gray-900 mt-2">
-        Featured <br /> Products
+        Featured <br className="md:hidden" /> <span className="hidden md:inline">Posts</span>
       </h2>
-      <p className="text-gray-500 mt-2">
-        Problems trying to resolve the conflict between the two major
+      <p className="text-gray-500 mt-2 max-w-xl mx-auto">
+        Problems trying to resolve the conflict between the two major realms of Classical physics: Newtonian mechanics
       </p>
 
-      <div className="mt-12 flex flex-col items-center gap-8">
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 place-items-center">
         {products.map((item) => (
           <div
             key={item.id}
-            className="bg-gray-100 border-2 border-gray-300 rounded-lg shadow-sm overflow-hidden text-left w-full max-w-sm transition transform duration-150 ease-in-out active:scale-95 cursor-pointer"
-
+            className="bg-gray-100 border border-gray-200 rounded-lg shadow-sm overflow-hidden text-left w-full max-w-sm md:max-w-full transition transform duration-150 ease-in-out active:scale-95 cursor-pointer min-h-[530px]"
           >
             <div className="relative">
               <span className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
@@ -62,7 +60,7 @@ const FeaturedProducts = () => {
               <img
                 src={item.image}
                 alt="product"
-                className="w-full h-52 object-cover"
+                className="w-full h-[260px] md:h-[500px] object-cover"
               />
             </div>
 
@@ -98,4 +96,3 @@ const FeaturedProducts = () => {
 };
 
 export default FeaturedProducts;
-

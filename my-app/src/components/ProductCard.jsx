@@ -1,11 +1,11 @@
-// src/components/ProductCard.jsx
+
 const ProductCard = ({ image, title, subtitle, oldPrice, newPrice, colors }) => {
   return (
     <div className="text-center space-y-2">
       <img
         src={image}
         alt={title}
-        className="w-full object-cover"
+        className="w-full h-[300px] lg:h-[345px] object-cover rounded"
       />
       <div>
         <p className="font-semibold text-sm">{title}</p>
