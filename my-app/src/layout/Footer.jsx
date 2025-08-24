@@ -8,9 +8,9 @@ function Footer() {
   return (
     <footer className="text-sm text-gray-600">
 
-      {/* ÜST ALAN - Logo + Sosyal */}
-      <div className="bg-[#FAFAFA] py-6 px-4 flex flex-col md:flex-row justify-between items-center md:px-20">
-        <h2 className="text-2xl font-bold text-[#252B42] mb-4 md:mb-0">Bandage</h2>
+
+      <div className="bg-white py-6 px-4 flex flex-col md:flex-row justify-between items-center md:px-20">
+        <h2 className="text-2xl font-bold text-[#252B42] mb-4 mt-3 md:mb-0">Bandage</h2>
         <div className="flex space-x-4">
           <Facebook className="text-blue-500" />
           <Instagram className="text-blue-500" />
@@ -18,10 +18,10 @@ function Footer() {
         </div>
       </div>
 
-      {/* ORTA ALAN - Link Grupları */}
+     
       <div className="bg-white px-6 py-10 grid grid-cols-1 md:grid-cols-5 gap-8 md:px-20">
 
-        {/* Grup: Company Info */}
+       
         <div>
           <h3 className="text-[#252B42] font-bold mb-3">Company Info</h3>
           <ul className="space-y-1">
@@ -32,7 +32,6 @@ function Footer() {
           </ul>
         </div>
 
-        {/* Grup: Legal */}
         <div>
           <h3 className="text-[#252B42] font-bold mb-3">Legal</h3>
           <ul className="space-y-1">
@@ -43,7 +42,7 @@ function Footer() {
           </ul>
         </div>
 
-        {/* Grup: Features */}
+       
         <div>
           <h3 className="text-[#252B42] font-bold mb-3">Features</h3>
           <ul className="space-y-1">
@@ -54,7 +53,7 @@ function Footer() {
           </ul>
         </div>
 
-        {/* Grup: Resources */}
+       
         <div>
           <h3 className="text-[#252B42] font-bold mb-3">Resources</h3>
           <ul className="space-y-1">
@@ -65,7 +64,6 @@ function Footer() {
           </ul>
         </div>
 
-        {/* Grup: Get In Touch */}
         <div>
           <h3 className="text-[#252B42] font-bold mb-3">Get In Touch</h3>
           <div className="flex border rounded overflow-hidden w-full max-w-md">
@@ -84,7 +82,7 @@ function Footer() {
         </div>
       </div>
 
-      {/* ALT ALAN - Telif Yazısı */}
+    
       <div className="bg-[#FAFAFA] text-center py-6 px-4 text-gray-600">
         <p className="font-bold">Made With Love By</p>
         <p className="font-bold">Finland All Right Reserved</p>

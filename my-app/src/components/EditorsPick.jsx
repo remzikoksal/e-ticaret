@@ -3,7 +3,7 @@ import React from "react";
 const EditorsPick = () => {
   return (
     <section className="px-4 py-10 bg-gray-50">
-      {/* Başlık */}
+     
       <div className="text-center mb-6">
         <h2 className="text-xl font-bold text-gray-900 mb-1">EDITOR’S PICK</h2>
         <p className="text-sm text-gray-500">
@@ -14,7 +14,7 @@ const EditorsPick = () => {
       
       <div className="flex flex-col gap-4 lg:flex-row lg:justify-center lg:items-stretch max-w-[1280px] mx-auto">
         
-        {/* MEN */}
+     
         <div className="relative w-full h-[500px] lg:w-[42%] lg:h-[700px]">
           <img
             src="/images/editorpick1.jpg"
@@ -29,7 +29,7 @@ const EditorsPick = () => {
      
         <div className="flex flex-col gap-4 w-full lg:flex-row lg:w-[58%]">
           
-          {/* WOMEN */}
+          
           <div className="relative w-full h-[500px] lg:h-[700px] lg:w-[65%]">
             <img
               src="/images/editorpick2.jpg"
@@ -41,9 +41,8 @@ const EditorsPick = () => {
             </span>
           </div>
 
-          {/* ACCESSORIES + KIDS */}
+         
           <div className="flex flex-col gap-4 w-full lg:w-[35%]">
-            {/* Accessories */}
             <div className="relative w-full h-[240px] lg:h-[345px]">
               <img
                 src="/images/editorpick3.jpg"
@@ -55,7 +54,7 @@ const EditorsPick = () => {
               </span>
             </div>
 
-            {/* Kids */}
+          
             <div className="relative w-full h-[240px] lg:h-[345px]">
               <img
                 src="/images/editorpick4.jpg"

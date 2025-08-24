@@ -1,20 +1,38 @@
 import Header from "./Header";
 import Footer from "./Footer";
 import HomePage from "../pages/HomePage";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom'
+
+import Shop from "../pages/Shop";
+import Contact from "../pages/Contact";
+import ProductDetail from "../pages//ProductDetails";
+import ScrollToTop from "./ScroolToTop";
+import Signup from "../pages/Signup"
+import RolesRedirect from "../pages/RolesRedirect"
+import Login from "../pages/Login"
+
 
 function PageContent() {
   return (
     <Router>
+      <ScrollToTop behavior="auto" />
       <Header />
       <main className="min-h-screen bg-white">
         <Switch>
           <Route path="/" exact component={HomePage} />
+          <Route path="/shop" exact component={Shop} />
+          <Route path="/contact" exact component={Contact} />
+          <Route path="/product/:productId" exact component={ProductDetail} />
+          <Route path="/signup" exact component={Signup} />
+          <Route path="/roles" exact component={RolesRedirect} />
+          <Route path="/login" exact component={Login} />
         </Switch>
       </main>
       <Footer />
     </Router>
-  );
+  )
 }
+export default PageContent
 
-export default PageContent;
+
+

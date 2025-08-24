@@ -1,0 +1,14 @@
+{
+  "id": 104,
+  "name": "Graphic Design",
+  "description": "Met minim Mollie non desert Alamo est sit cliquey dolor do met sent. RELIT official consequent door ENIM RELIT Mollie. Excitation venial consequent sent nostrum met.",
+  "price": 129.90,
+  "stock": 12,
+  "store_id": 1,
+  "category_id": 3,
+  "rating": 4.2,
+  "sell_count": 90,
+  "images": [
+    { "url": "/assets/products/104/4.jpg", "index": 0 }
+  ]
+}

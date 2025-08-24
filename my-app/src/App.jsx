@@ -1,15 +1,14 @@
-import { Home } from "lucide-react";
-import Footer from "./layout/Footer";
-import Header from "./layout/Header";
-import HomePage from "./pages/HomePage";
+
+import PageContent from "./layout/PageContent";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-     <HomePage />
-      <Footer />
-    </div>
+    <>
+      <PageContent />
+      <ToastContainer position="top-right" autoClose={4000} newestOnTop />
+    </>
   );
 }
 
