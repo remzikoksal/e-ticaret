@@ -1,4 +1,3 @@
-
 import { ChevronDown } from 'lucide-react';
 
 import {
@@ -15,12 +14,15 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useHistory } from "react-router-dom";
 
 import { useSelector, useDispatch } from "react-redux";
 import Gravatar from "react-gravatar";
 import { CLIENT_SET_USER } from "../store/reducers/clientReducer";
+
+
+import { fetchCategoriesIfNeeded } from "../store/thunks/productThunks";
 
 export default function Header() {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -29,14 +31,20 @@ export default function Header() {
   const user = useSelector((s) => s.client?.user);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  
   const userMenuRefDesktop = useRef(null);
   const userMenuRefMobile = useRef(null);
 
   const dispatch = useDispatch();
+  const categories = useSelector((s) => s.product?.categories || []);
+
   const history = useHistory();
 
- 
+  
+  useEffect(() => {
+    dispatch(fetchCategoriesIfNeeded());
+  }, [dispatch]);
+
+  
   useEffect(() => {
     const handler = (e) => {
       const inDesktop =
@@ -45,10 +53,7 @@ export default function Header() {
       const inMobile =
         userMenuRefMobile.current &&
         userMenuRefMobile.current.contains(e.target);
-
-      if (!inDesktop && !inMobile) {
-        setUserMenuOpen(false);
-      }
+      if (!inDesktop && !inMobile) setUserMenuOpen(false);
     };
     if (userMenuOpen) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -56,26 +61,73 @@ export default function Header() {
 
   const handleLogout = (e) => {
     e?.preventDefault?.();
-
-   
     dispatch({ type: CLIENT_SET_USER, payload: null });
-
- 
     localStorage.removeItem("token");
-
-   
     setUserMenuOpen(false);
     setMobileMenuOpen(false);
-
-    
-    try {
-      history.replace("/");
-    } catch (_) {}
+    try { history.replace("/"); } catch (_) {}
     setTimeout(() => {
-      if (window.location.pathname !== "/") {
-        window.location.assign("/");
-      }
+      if (window.location.pathname !== "/") window.location.assign("/");
     }, 10);
+  };
+
+  const normalize = (s = "") =>
+    String(s).toLowerCase()
+      .replaceAll("ş","s").replaceAll("ı","i").replaceAll("ğ","g")
+      .replaceAll("ç","c").replaceAll("ö","o").replaceAll("ü","u");
+
+  const slugify = (s = "") =>
+    normalize(s).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+  const getImg = (c) =>
+    c?.img || c?.image || c?.image_url || c?.imageUrl || c?.thumbnail || c?.icon || c?.logo ||
+    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%23e5e7eb"/></svg>';
+
+  
+  const getName = (c) =>
+    c?.name ?? c?.title ?? c?.label ?? c?.category ?? c?.category_name ?? c?.categoryName ?? c?.slug ?? "";
+
+  const hasWomanFlag = (c) => {
+    const g = normalize(c?.gender || c?.sex || c?.type || "");
+    return g.includes("kadin") || g.includes("women") || g.includes("woman") || g.includes("female");
+  };
+  const hasManFlag = (c) => {
+    const g = normalize(c?.gender || c?.sex || c?.type || "");
+    return g.includes("erkek") || g.includes("men") || g.includes("man") || g.includes("male");
+  };
+
+  
+  const isIdWoman = (id) => Number(id) >= 1 && Number(id) <= 8;
+  const isIdMan   = (id) => Number(id) >= 9 && Number(id) <= 14;
+
+  
+  const orderWomen = ["t-shirt", "shoe", "jacket", "dress", "skirt", "shirt", "jumper", "trousers"];
+  const orderMen   = ["t-shirt", "shoe", "jacket", "dress",           "shirt", "jumper", "trousers"];
+
+  const nameKey = (c) => normalize(getName(c));
+
+  const { womenCats, menCats } = useMemo(() => {
+    const womens = [];
+    const mens = [];
+    (categories || []).forEach((c) => {
+      if (hasWomanFlag(c) || (!hasManFlag(c) && isIdWoman(c.id))) womens.push(c);
+      else if (hasManFlag(c) || isIdMan(c.id)) mens.push(c);
+    });
+
+    const wIndex = new Map(orderWomen.map((n, i) => [n, i]));
+    const mIndex = new Map(orderMen.map((n, i) => [n, i]));
+
+    womens.sort((a, b) => (wIndex.get(nameKey(a)) ?? 999) - (wIndex.get(nameKey(b)) ?? 999));
+    mens.sort((a, b) => (mIndex.get(nameKey(a)) ?? 999) - (mIndex.get(nameKey(b)) ?? 999));
+
+    return { womenCats: womens, menCats: mens };
+  }, [categories]);
+
+ 
+  const catLink = (c, gender) => {
+    const g = gender || (isIdWoman(c.id) || hasWomanFlag(c) ? "kadin" : "erkek");
+    const nameSlug = slugify(getName(c) || "kategori");
+    return `/shop/${g}/${nameSlug}/${c.id}`;
   };
 
   return (
@@ -106,14 +158,15 @@ export default function Header() {
         </div>
       </div>
 
+     
       <div className="bg-white py-4 shadow-sm relative">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 relative">
-       
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-4">
+         
           <h1 className="text-2xl font-bold">
             <Link to="/" className="hover:opacity-80">Bandage</Link>
           </h1>
 
-       
+          
           <nav className="hidden md:flex gap-4 text-gray-600 font-semibold text-sm relative">
             <Link to="/" className="hover:underline">Home</Link>
 
@@ -132,27 +185,53 @@ export default function Header() {
                 </button>
               </div>
 
+              
               {isShopOpen && (
                 <div className="absolute top-full mt-2 left-0 bg-white shadow-md rounded border w-[300px] z-40 p-6">
                   <div className="grid grid-cols-2 gap-8">
+                   
                     <div>
                       <h4 className="font-bold text-gray-900 mb-2">Kadın</h4>
                       <ul className="space-y-2 text-gray-600 font-semibold">
-                        <li className="cursor-pointer hover:text-blue-500">Bags</li>
-                        <li className="cursor-pointer hover:text-blue-500">Belts</li>
-                        <li className="cursor-pointer hover:text-blue-500">Cosmetics</li>
-                        <li className="cursor-pointer hover:text-blue-500">Bags</li>
-                        <li className="cursor-pointer hover:text-blue-500">Hats</li>
+                        {womenCats.length === 0 && (
+                          <li className="text-sm text-gray-400">Loading…</li>
+                        )}
+                        {womenCats.map((c) => (
+                          <li key={c.id}>
+                            <Link to={catLink(c, "kadin")} className="flex items-center gap-2 hover:text-blue-500">
+                              <img
+                                src={getImg(c)}
+                                alt={getName(c)}
+                                className="w-5 h-5 rounded object-cover border border-gray-200"
+                                loading="lazy"
+                              />
+                              <span className="truncate">{getName(c)}</span>
+                            </Link>
+                          </li>
+                        ))}
                       </ul>
                     </div>
+
+                
                     <div>
                       <h4 className="font-bold text-gray-900 mb-2">Erkek</h4>
                       <ul className="space-y-2 text-gray-600 font-semibold">
-                        <li className="cursor-pointer hover:text-blue-500">Bags</li>
-                        <li className="cursor-pointer hover:text-blue-500">Belts</li>
-                        <li className="cursor-pointer hover:text-blue-500">Cosmetics</li>
-                        <li className="cursor-pointer hover:text-blue-500">Bags</li>
-                        <li className="cursor-pointer hover:text-blue-500">Hats</li>
+                        {menCats.length === 0 && (
+                          <li className="text-sm text-gray-400">Loading…</li>
+                        )}
+                        {menCats.map((c) => (
+                          <li key={c.id}>
+                            <Link to={catLink(c, "erkek")} className="flex items-center gap-2 hover:text-blue-500">
+                              <img
+                                src={getImg(c)}
+                                alt={getName(c)}
+                                className="w-5 h-5 rounded object-cover border border-gray-200"
+                                loading="lazy"
+                              />
+                              <span className="truncate">{getName(c)}</span>
+                            </Link>
+                          </li>
+                        ))}
                       </ul>
                     </div>
                   </div>
@@ -203,7 +282,6 @@ export default function Header() {
               </div>
             ) : (
               <div className="flex items-center gap-1 text-sm">
-              
                 <Link to="/login" className="flex items-center gap-1 text-[#23A6F0]">
                   <User size={16} />
                   <span>Login</span>
@@ -272,7 +350,7 @@ export default function Header() {
           </div>
         </div>
 
-        
+      
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white px-4 pb-4">
             <div className="flex justify-end">

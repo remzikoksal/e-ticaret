@@ -1,4 +1,3 @@
-// src/pages/contact/contactSection2.jsx
 import { useRef, useState } from "react";
 
 const DEFAULT_STATS = [

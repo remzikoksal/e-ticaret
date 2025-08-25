@@ -11,7 +11,6 @@ import Signup from "../pages/Signup"
 import RolesRedirect from "../pages/RolesRedirect"
 import Login from "../pages/Login"
 
-
 function PageContent() {
   return (
     <Router>
@@ -20,6 +19,11 @@ function PageContent() {
       <main className="min-h-screen bg-white">
         <Switch>
           <Route path="/" exact component={HomePage} />
+          <Route
+            path="/shop/:gender/:categoryName/:categoryId"
+            exact
+            component={Shop}
+          />
           <Route path="/shop" exact component={Shop} />
           <Route path="/contact" exact component={Contact} />
           <Route path="/product/:productId" exact component={ProductDetail} />
@@ -33,6 +37,3 @@ function PageContent() {
   )
 }
 export default PageContent
-
-
-

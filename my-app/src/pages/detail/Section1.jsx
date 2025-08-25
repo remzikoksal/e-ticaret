@@ -97,11 +97,11 @@ export default function Section1({ product, fillMode = "cover", bg = "bg-[#FAFAF
                 Select Options
               </button>
 
-              {/* Beğenme */}
+             
               <IconBtn title="Wishlist" imgSrc="/icons/actions/heart.png" btnClass="w-12 h-12 md:w-9 md:h-9" imgClass="w-6 h-6 md:w-4 md:h-4" />
-              {/* Sepet */}
+             
               <IconBtn title="Cart" imgSrc="/icons/actions/cart.png" btnClass="w-12 h-12 md:w-9 md:h-9" imgClass="w-6 h-6 md:w-4 md:h-4" />
-              {/* İzleme */}
+             
               <IconBtn title="Watch" imgSrc="/icons/actions/eye.png" btnClass="w-12 h-12 md:w-9 md:h-9" imgClass="w-6 h-6 md:w-4 md:h-4" />
             </div>
           </div>

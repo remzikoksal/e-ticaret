@@ -1,48 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import ProductCard from "./ProductCard";
-
-const BASE = "/api/products";
+import { fetchProducts } from "../store/thunks/productThunks";
 
 const BestSellers = () => {
-  const [items, setItems] = useState(null);
+  const dispatch = useDispatch();
+  const { productList = [], fetchState } = useSelector((s) => s.product || {});
 
   useEffect(() => {
-    let alive = true;
+    dispatch(fetchProducts());
+  }, [dispatch]);
 
-    async function load() {
-      try {
-      
-        const idxRes = await fetch(`${BASE}/index.json`);
-        if (!idxRes.ok) throw new Error(`index.json HTTP ${idxRes.status}`);
-        const idx = await idxRes.json();
-        const bestIds = (idx.products || [])
-          .filter((x) => x.bestSeller)
-          .map((x) => x.id);
-
-      
-        const prods = await Promise.all(
-          bestIds.map(async (id) => {
-            const res = await fetch(`${BASE}/${id}.json`);
-            if (!res.ok) throw new Error(`${id}.json HTTP ${res.status}`);
-            return res.json();
-          })
-        );
-
-        if (alive) setItems(prods);
-      } catch (e) {
-        console.error("BestSellers load error:", e);
-        if (alive) setItems([]);
-      }
-    }
-
-    load();
-    return () => {
-      alive = false;
-    };
-  }, []);
+  const isLoading = fetchState === 'FETCHING' && productList.length === 0;
 
   
-  if (!items) {
+  const items = productList.slice(0, 8).map((p) => {
+    const image =
+      p?.images?.[0]?.url || p?.images?.[0] || p?.image || p?.imageUrl || "/placeholder.jpg";
+    const title = p?.name || "Product";
+    const newPrice = Number(p?.price ?? 0);
+    const oldPrice = newPrice ? newPrice * 1.6 : 0;
+    return { ...p, image, title, newPrice, oldPrice };
+  });
+
+  if (isLoading) {
     return (
       <section className="px-4 py-10">
         <div className="text-center mb-6">
@@ -83,27 +64,19 @@ const BestSellers = () => {
       </div>
 
       <div className="grid grid-cols-2 gap-6 lg:grid-cols-4 max-w-[1280px] mx-auto">
-        {items.map((p, index) => {
-          const image =
-            p?.images?.[0]?.url || p?.images?.[0] || "/placeholder.jpg";
-          const title = p?.name || "Product";
-          const newPrice = Number(p?.price ?? 0);
-          const oldPrice = newPrice ? (newPrice * 1.6) : 0;
-
-          return (
-            <ProductCard
-              key={p?.id ?? index}
-              id={p?.id}
-              to={`/product/${p?.id}`}   
-              image={image}
-              title={title}
-              subtitle={"English Department"}
-              oldPrice={oldPrice.toFixed(2)}
-              newPrice={newPrice.toFixed(2)}
-              colors={["#23A6F0", "#23856D", "#E77C40", "#252B42"]}
-            />
-          );
-        })}
+        {items.map((p, index) => (
+          <ProductCard
+            key={p?.id ?? index}
+            id={p?.id}
+            to={`/product/${p?.id}`}
+            image={p.image}
+            title={p.title}
+            subtitle={"English Department"}
+            oldPrice={p.oldPrice.toFixed(2)}
+            newPrice={p.newPrice.toFixed(2)}
+            colors={["#23A6F0", "#23856D", "#E77C40", "#252B42"]}
+          />
+        ))}
       </div>
     </section>
   );
