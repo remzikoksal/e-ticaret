@@ -6,6 +6,7 @@ import {
   PRODUCT_SET_LIMIT,
   PRODUCT_SET_OFFSET,
   PRODUCT_SET_FILTER,
+  PRODUCT_SET_SELECTED,
 } from '../reducers/productReducer'
 
 export const setCategories = (arr) => ({ type: PRODUCT_SET_CATEGORIES, payload: arr })
@@ -15,3 +16,4 @@ export const setFetchState = (st) => ({ type: PRODUCT_SET_FETCH_STATE, payload: 
 export const setLimit = (n) => ({ type: PRODUCT_SET_LIMIT, payload: n })
 export const setOffset = (n) => ({ type: PRODUCT_SET_OFFSET, payload: n })
 export const setFilter = (str) => ({ type: PRODUCT_SET_FILTER, payload: str })
+export const setSelectedProduct = (obj) => ({ type: PRODUCT_SET_SELECTED, payload: obj })

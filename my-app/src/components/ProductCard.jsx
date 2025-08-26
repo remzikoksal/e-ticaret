@@ -1,52 +1,68 @@
+import React from "react";
 import { Link } from "react-router-dom";
 
-const ProductCard = ({
-  id,
-  to,                 
+function normalizeSrc(src) {
+  if (!src) return "/placeholder.jpg";            
+  if (/^https?:\/\//i.test(src)) return src;     
+  if (src.startsWith("/")) return src;            
+  return "/" + src.replace(/^\.?\//, "");
+}
+
+export default function ProductCard({
+  to = "#",
   image,
   title,
   subtitle,
   oldPrice,
   newPrice,
   colors = [],
-}) => {
-  const safeColors = colors.length ? colors : ["#23A6F0", "#23856D", "#E77C40", "#252B42"];
-  const cover = image || "/placeholder.jpg";
-
-  const Wrapper = to ? Link : "div";
-  const wrapperProps = to ? { to, "aria-label": title || "Product", className: "block" } : { className: "block" };
+}) {
+  const finalSrc = normalizeSrc(image);
 
   return (
-    <Wrapper {...wrapperProps}>
-      <article
-        className="
-          text-center space-y-2 rounded-2xl border overflow-hidden
-          transition duration-200 cursor-pointer
-          hover:shadow-lg hover:-translate-y-0.5
-        "
-      >
-        <div className="w-full aspect-[3/4] lg:aspect-[4/5] overflow-hidden">
-          <img src={cover} alt={title} className="w-full h-full object-cover" />
+    <Link
+      to={to}
+      className="block group cursor-pointer transition-transform duration-150 hover:-translate-y-0.5"
+      title={title}
+    >
+      <div className="w-full aspect-[4/5] rounded overflow-hidden border bg-white">
+        <img
+          src={finalSrc}
+          alt={title}
+          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-200"
+          loading="lazy"
+        />
+      </div>
+
+      <div className="text-center mt-4">
+        <h3 className="text-[#252B42] font-semibold">{title}</h3>
+        {subtitle && (
+          <p className="text-sm text-[#737373] mt-1">{subtitle}</p>
+        )}
+        <div className="flex items-baseline justify-center gap-2 mt-2">
+          {oldPrice && (
+            <span className="text-[#BDBDBD] line-through font-semibold">
+              {oldPrice}
+            </span>
+          )}
+          {newPrice && (
+            <span className="text-[#23856D] font-bold">{newPrice}</span>
+          )}
         </div>
 
-        <div>
-          <p className="font-semibold text-sm">{title}</p>
-          <p className="text-xs text-gray-500">{subtitle}</p>
-        </div>
-
-        <div className="space-x-2">
-          <span className="line-through text-gray-400 text-sm">${oldPrice}</span>
-          <span className="text-green-500 font-semibold text-sm">${newPrice}</span>
-        </div>
-
-        <div className="flex justify-center gap-2 pb-3">
-          {safeColors.map((c, i) => (
-            <span key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: c }} />
-          ))}
-        </div>
-      </article>
-    </Wrapper>
+        {Array.isArray(colors) && colors.length > 0 && (
+          <div className="flex items-center justify-center gap-2 mt-3">
+            {colors.slice(0, 4).map((c, i) => (
+              <span
+                key={i}
+                className="w-3 h-3 rounded-full border"
+                style={{ backgroundColor: c }}
+                title="Color"
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </Link>
   );
-};
-
-export default ProductCard;
+}
