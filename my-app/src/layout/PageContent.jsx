@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 
 import Shop from "../pages/Shop";
 import Contact from "../pages/Contact";
+import About from "../pages/About";
 import ProductDetail from "../pages/ProductDetails"; 
 import ScrollToTop from "./ScroolToTop";
 import Signup from "../pages/Signup";
@@ -31,6 +32,7 @@ function PageContent() {
           />
           <Route path="/product/:productId" exact component={ProductDetail} />
           <Route path="/shop" exact component={Shop} />
+          <Route path="/about" exact component={About} />
           <Route path="/contact" exact component={Contact} />
           <Route path="/signup" exact component={Signup} />
           <Route path="/roles" exact component={RolesRedirect} />

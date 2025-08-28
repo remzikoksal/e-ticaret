@@ -312,12 +312,10 @@ export default function Header() {
               )}
             </div>
 
-            <a href="#" onClick={closeAllMenus}>
+            <Link to="/about" className="hover:text-black" onClick={closeAllMenus}>
               About
-            </a>
-            <a href="#" onClick={closeAllMenus}>
-              Blog
-            </a>
+            </Link>
+           
             <Link to="/contact" className="hover:text-black" onClick={closeAllMenus}>
               Contact
             </Link>
