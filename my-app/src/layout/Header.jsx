@@ -12,6 +12,8 @@ import {
   User,
   Menu,
   X,
+  Plus,
+  Minus,
 } from "lucide-react";
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useHistory } from "react-router-dom";
@@ -19,6 +21,7 @@ import { useSelector, useDispatch } from "react-redux";
 import Gravatar from "react-gravatar";
 import { CLIENT_SET_USER } from "../store/reducers/clientReducer";
 import { fetchCategoriesIfNeeded } from "../store/thunks/productThunks";
+import { setCart } from "../store/actions/shoppingCartActions"; // 🆕 sepet güncelleme
 
 export default function Header() {
   const dispatch = useDispatch();
@@ -28,8 +31,16 @@ export default function Header() {
   const [isShopOpen, setShopOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
+ 
+  const [cartOpen, setCartOpen] = useState(false);
+  const cartMenuRef = useRef(null);
+  const cartToggleRef = useRef(null);
+
   const user = useSelector((s) => s.client?.user);
   const categories = useSelector((s) => s.product?.categories || []);
+
+  const cart = useSelector((s) => s.shoppingCart?.cart || []);
+  const cartCount = cart.reduce((acc, it) => acc + (it?.count || 0), 0);
 
   const userMenuRefDesktop = useRef(null);
   const userMenuRefMobile = useRef(null);
@@ -68,8 +79,26 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", onDocDown);
   }, [isShopOpen]);
 
+  
   useEffect(() => {
-    const unlisten = history.listen(() => setShopOpen(false));
+    const onDocDown = (e) => {
+      const inMenu = cartMenuRef.current && cartMenuRef.current.contains(e.target);
+      const inToggle =
+        cartToggleRef.current && cartToggleRef.current.contains(e.target);
+      if (!inMenu && !inToggle) setCartOpen(false);
+    };
+    if (cartOpen) document.addEventListener("mousedown", onDocDown);
+    return () => document.removeEventListener("mousedown", onDocDown);
+  }, [cartOpen]);
+
+
+  useEffect(() => {
+    const unlisten = history.listen(() => {
+      setShopOpen(false);
+      setUserMenuOpen(false);
+      setMobileMenuOpen(false);
+      setCartOpen(false);
+    });
     return () => unlisten && unlisten();
   }, [history]);
 
@@ -181,11 +210,46 @@ export default function Header() {
     setShopOpen(false);
     setMobileMenuOpen(false);
     setUserMenuOpen(false);
+    setCartOpen(false);
+  };
+
+  
+  const parsePrice = (v) => {
+    if (v == null) return 0;
+    if (typeof v === "number") return v;
+    const s = String(v).replaceAll(".", "").replace(",", ".").replace(/[^\d.-]/g, "");
+    const n = parseFloat(s);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const priceOf = (p) =>
+    parsePrice(p?.price ?? p?.unit_price ?? p?.amount ?? 0);
+
+  const totalPrice = cart.reduce((sum, it) => sum + (it?.count || 0) * priceOf(it?.product), 0);
+
+ 
+  const incItem = (pid) => {
+    const next = cart.map((it) =>
+      String(it?.product?.id) === String(pid)
+        ? { ...it, count: (it.count || 0) + 1 }
+        : it
+    );
+    dispatch(setCart(next));
+  };
+
+  const decItem = (pid) => {
+    const next = cart
+      .map((it) =>
+        String(it?.product?.id) === String(pid)
+          ? { ...it, count: (it.count || 0) - 1 }
+          : it
+      )
+      .filter((it) => (it.count || 0) > 0);
+    dispatch(setCart(next));
   };
 
   return (
     <header>
- 
+    
       <div className="hidden md:block bg-[#2E2F41] text-white text-sm py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center px-4">
           <div className="flex items-center gap-4">
@@ -215,20 +279,18 @@ export default function Header() {
 
       <div className="bg-white py-4 shadow-sm relative">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4">
-         
           <h1 className="text-2xl font-bold">
             <Link to="/" className="hover:opacity-80" onClick={closeAllMenus}>
               Bandage
             </Link>
           </h1>
 
-       
+         
           <nav className="hidden md:flex gap-4 text-gray-600 font-semibold text-sm relative">
             <Link to="/" className="hover:underline" onClick={closeAllMenus}>
               Home
             </Link>
 
-      
             <div className="relative" ref={shopToggleRef}>
               <div className="hover:text-black flex items-center gap-1">
                 <Link to="/shop" className="hover:text-black" onClick={closeAllMenus}>
@@ -254,7 +316,6 @@ export default function Header() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="grid grid-cols-2 gap-8">
-                 
                     <div>
                       <h4 className="font-bold text-gray-900 mb-2">Kadın</h4>
                       <ul className="space-y-2 text-gray-600 font-semibold">
@@ -281,7 +342,6 @@ export default function Header() {
                       </ul>
                     </div>
 
-               
                     <div>
                       <h4 className="font-bold text-gray-900 mb-2">Erkek</h4>
                       <ul className="space-y-2 text-gray-600 font-semibold">
@@ -315,7 +375,7 @@ export default function Header() {
             <Link to="/about" className="hover:text-black" onClick={closeAllMenus}>
               About
             </Link>
-           
+
             <Link to="/contact" className="hover:text-black" onClick={closeAllMenus}>
               Contact
             </Link>
@@ -324,7 +384,7 @@ export default function Header() {
             </a>
           </nav>
 
-      
+        
           <div className="hidden md:flex items-center gap-4">
             {user ? (
               <div className="relative" ref={userMenuRefDesktop}>
@@ -374,57 +434,133 @@ export default function Header() {
             )}
 
             <Search size={20} className="text-gray-600" />
-            <div className="flex items-center gap-1">
-              <ShoppingCart size={20} className="text-gray-600" />
-              <span className="text-sm">0</span>
+
+          
+            <div className="relative" ref={cartToggleRef}>
+              <button
+                type="button"
+                className="flex items-center gap-1"
+                onClick={() => setCartOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={cartOpen}
+                title="Sepeti aç"
+              >
+                <ShoppingCart size={20} className="text-gray-600" />
+                <span className="text-sm">{cartCount}</span>
+              </button>
+
+              {cartOpen && (
+                <div
+                  ref={cartMenuRef}
+                  role="menu"
+                  className="absolute right-0 mt-2 w-[340px] bg-white border rounded-md shadow-lg z-50 overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="px-4 pt-3 pb-2 text-[14px] font-semibold text-[#252B42]">
+                    Sepetim ({cartCount} Ürün)
+                  </div>
+
+                  <div className="max-h-[360px] overflow-auto divide-y">
+                    {cart.length === 0 ? (
+                      <div className="px-4 py-6 text-sm text-gray-500">Sepetiniz boş</div>
+                    ) : (
+                      cart.map((item) => {
+                        const p = item.product || {};
+                        const pid = p.id;
+                        const title =
+                          p.name || p.title || p.label || `#${pid || ""}`;
+                        const img =
+                          p.image ||
+                          p.image_url ||
+                          p.imageUrl ||
+                          (Array.isArray(p.images) ? p.images[0] : null);
+                        const price = priceOf(p);
+
+                        return (
+                          <div key={pid} className="flex gap-3 px-4 py-3 items-center">
+                            <div className="w-12 h-12 rounded border overflow-hidden bg-gray-50 shrink-0">
+                              {img ? (
+                                <img src={img} alt={title} className="w-full h-full object-cover" />
+                              ) : null}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-semibold text-[#252B42] truncate">
+                                {title}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(price)}
+                              </div>
+                            </div>
+
+                        
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                aria-label="Azalt"
+                                onClick={() => decItem(pid)}
+                                className="w-7 h-7 rounded border grid place-items-center hover:bg-gray-50"
+                                title="Azalt"
+                              >
+                                <Minus size={14} />
+                              </button>
+                              <span className="w-6 text-center text-sm">{item.count}</span>
+                              <button
+                                type="button"
+                                aria-label="Arttır"
+                                onClick={() => incItem(pid)}
+                                className="w-7 h-7 rounded border grid place-items-center hover:bg-gray-50"
+                                title="Arttır"
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                
+                  <div className="flex items-center justify-between px-4 py-3 border-t bg-white">
+                    <span className="text-sm font-semibold text-[#252B42]">Toplam</span>
+                    <span className="text-base font-bold text-[#F2994A]">
+                      {new Intl.NumberFormat("tr-TR", {
+                        style: "currency",
+                        currency: "TRY",
+                      }).format(totalPrice)}
+                    </span>
+                  </div>
+
+             
+                  <div className="flex gap-3 p-3 border-t bg-white">
+                    <Link
+                      to="/cart"
+                      className="flex-1 border rounded px-4 py-2 text-sm font-semibold text-[#252B42] hover:bg-gray-50 text-center"
+                      onClick={() => setCartOpen(false)}
+                    >
+                      Sepete Git
+                    </Link>
+                    <Link
+                      to="/checkout"
+                      className="flex-1 bg-[#F2994A] text-white rounded px-4 py-2 text-sm font-semibold text-center hover:opacity-90"
+                      onClick={() => setCartOpen(false)}
+                    >
+                      Siparişi Tamamla
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
+
             <div className="flex items-center gap-1">
               <Heart size={20} className="text-gray-600" />
               <span className="text-sm">0</span>
             </div>
           </div>
 
+  
           <div className="flex md:hidden items-center gap-3">
-            {user ? (
-              <div className="relative" ref={userMenuRefMobile}>
-                <button
-                  type="button"
-                  className="flex items-center gap-1"
-                  onClick={() => setUserMenuOpen((v) => !v)}
-                  aria-haspopup="menu"
-                  aria-expanded={userMenuOpen}
-                >
-                  <Gravatar
-                    email={user.email}
-                    size={20}
-                    className="rounded-full"
-                    default="mp"
-                    alt={user.name || user.email}
-                  />
-                  <ChevronDown size={16} className="text-[#252B42]" />
-                </button>
-
-                {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-lg z-50 py-2">
-                    <div className="px-4 pb-2 text-[12px] text-gray-500 truncate max-w-[9rem]">
-                      {user.name || user.email}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link to="/login" className="text-[#23A6F0]" onClick={closeAllMenus}>
-                <User size={20} />
-              </Link>
-            )}
-
             <Search size={20} />
             <ShoppingCart size={20} />
             <Menu size={24} onClick={() => setMobileMenuOpen(true)} />
@@ -443,12 +579,9 @@ export default function Header() {
               <Link to="/shop" onClick={closeAllMenus}>
                 Shop
               </Link>
-              <a href="#" onClick={closeAllMenus}>
-                Product
-              </a>
-              <a href="#" onClick={closeAllMenus}>
-                Pricing
-              </a>
+              <Link to="/about" onClick={closeAllMenus}>
+                About
+              </Link>
               <Link to="/contact" onClick={closeAllMenus}>
                 Contact
               </Link>

@@ -1,27 +1,34 @@
 import React from "react";
 import { useHistory } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";          
+import { setCart } from "../../store/actions/shoppingCartActions"; 
 
 export default function Section1({ product, fillMode = "cover", bg = "bg-[#FAFAFA]" }) {
   const history = useHistory();
+  const dispatch = useDispatch();                                
+  const cart = useSelector((s) => s.shoppingCart?.cart || []);    
 
   const {
+    id,
     name = "",
     price = 0,
     stock = 0,
     rating = 0,
     description = "",
     images = [],
+    image,
+    image_url,
+    imageUrl,
   } = product || {};
 
   const list = (Array.isArray(images) ? images : [])
     .map((it) => (typeof it === "string" ? it : it?.url))
     .filter(Boolean);
+  const main = list[0] || image || image_url || imageUrl || "/placeholder.jpg";
 
-  const main = list[0] || "/placeholder.jpg";
-
-  const priceText = new Intl.NumberFormat("en-US", {
+  const priceText = new Intl.NumberFormat("tr-TR", {
     style: "currency",
-    currency: "USD",
+    currency: "TRY",
   }).format(Number(price || 0));
 
   const imgFit = fillMode === "contain" ? "object-contain" : "object-cover";
@@ -29,6 +36,26 @@ export default function Section1({ product, fillMode = "cover", bg = "bg-[#FAFAF
   const handleBack = () => {
     if (history.length > 1) history.goBack();
     else history.push("/shop");
+  };
+
+  const handleAddToCart = () => {
+    if (!product || !id) return;
+
+    const idx = cart.findIndex((it) => String(it?.product?.id) === String(id));
+    let nextCart;
+
+    if (idx !== -1) {
+      nextCart = cart.map((it, i) =>
+        i === idx ? { ...it, count: (it.count || 0) + 1 } : it
+      );
+    } else {
+      nextCart = [
+        ...cart,
+        { count: 1, checked: true, product: product },
+      ];
+    }
+
+    dispatch(setCart(nextCart));
   };
 
   return (
@@ -93,6 +120,7 @@ export default function Section1({ product, fillMode = "cover", bg = "bg-[#FAFAF
             )}
             <hr className="border-[#BDBDBD]" />
 
+       
             <div className="flex items-center gap-4 md:gap-2">
               {["#23A6F0", "#23856D", "#E77C40", "#2C3A4B"].map((c, i) => (
                 <span key={i} className="w-10 h-10 md:w-8 md:h-8 rounded-full border" style={{ backgroundColor: c }} />
@@ -101,10 +129,19 @@ export default function Section1({ product, fillMode = "cover", bg = "bg-[#FAFAF
 
             <div className="flex items-center gap-3 pt-3">
               <button className="px-6 py-3 md:px-4 md:py-2 rounded bg-[#23A6F0] text-white text-sm font-semibold hover:opacity-90">
-                Select Options
+                BUY NOW
               </button>
+
+            
+              <IconBtn
+                title="Cart"
+                imgSrc="/icons/actions/cart.png"
+                btnClass="w-12 h-12 md:w-9 md:h-9"
+                imgClass="w-6 h-6 md:w-4 md:h-4"
+                onClick={handleAddToCart}
+              />
+
               <IconBtn title="Wishlist" imgSrc="/icons/actions/heart.png" btnClass="w-12 h-12 md:w-9 md:h-9" imgClass="w-6 h-6 md:w-4 md:h-4" />
-              <IconBtn title="Cart" imgSrc="/icons/actions/cart.png" btnClass="w-12 h-12 md:w-9 md:h-9" imgClass="w-6 h-6 md:w-4 md:h-4" />
               <IconBtn title="Watch" imgSrc="/icons/actions/eye.png" btnClass="w-12 h-12 md:w-9 md:h-9" imgClass="w-6 h-6 md:w-4 md:h-4" />
             </div>
           </div>
@@ -114,15 +151,16 @@ export default function Section1({ product, fillMode = "cover", bg = "bg-[#FAFAF
   );
 }
 
-function IconBtn({ title, imgSrc, btnClass = "w-9 h-9", imgClass = "w-4 h-4", children }) {
+function IconBtn({ title, imgSrc, btnClass = "w-9 h-9", imgClass = "w-4 h-4", onClick }) {
   return (
     <button
       type="button"
       title={title}
       aria-label={title}
+      onClick={onClick}
       className={`${btnClass} bg-white rounded-full border grid place-items-center hover:bg-[#FAFAFA]`}
     >
-      {imgSrc ? <img src={imgSrc} alt="" className={imgClass} /> : <svg width="18" height="18" viewBox="0 0 24 24" fill="#737373">{children}</svg>}
+      {imgSrc ? <img src={imgSrc} alt="" className={imgClass} /> : null}
     </button>
   );
 }
