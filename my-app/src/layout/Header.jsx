@@ -1,5 +1,6 @@
-import { ChevronDown } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ChevronDown,
   Mail,
   Phone,
   Instagram,
@@ -15,106 +16,80 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
-import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useHistory } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Gravatar from "react-gravatar";
+
 import { CLIENT_SET_USER } from "../store/reducers/clientReducer";
 import { fetchCategoriesIfNeeded } from "../store/thunks/productThunks";
-import { setCart } from "../store/actions/shoppingCartActions"; // 🆕 sepet güncelleme
+import { setCart } from "../store/actions/shoppingCartActions";
 
 export default function Header() {
   const dispatch = useDispatch();
   const history = useHistory();
-
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isShopOpen, setShopOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-
- 
   const [cartOpen, setCartOpen] = useState(false);
-  const cartMenuRef = useRef(null);
-  const cartToggleRef = useRef(null);
-
-  const user = useSelector((s) => s.client?.user);
-  const categories = useSelector((s) => s.product?.categories || []);
-
-  const cart = useSelector((s) => s.shoppingCart?.cart || []);
-  const cartCount = cart.reduce((acc, it) => acc + (it?.count || 0), 0);
-
   const userMenuRefDesktop = useRef(null);
   const userMenuRefMobile = useRef(null);
   const shopMenuRef = useRef(null);
   const shopToggleRef = useRef(null);
+  const cartContainerRef = useRef(null); 
+  const cartToggleRef = useRef(null);
+  const user = useSelector((s) => s.client?.user);
+  const categories = useSelector((s) => s.product?.categories || []);
+  const cart = useSelector((s) => s.shoppingCart?.cart || []);
+  const cartCount = cart.reduce((acc, it) => acc + (it?.count || 0), 0);
+  const goCheckout = () => {
+  setCartOpen(false);
+  if (user) history.push("/checkout");
+  else history.push("/login");
+};
 
   useEffect(() => {
     dispatch(fetchCategoriesIfNeeded());
   }, [dispatch]);
 
-  
   useEffect(() => {
     const handler = (e) => {
-      const inDesktop =
-        userMenuRefDesktop.current &&
-        userMenuRefDesktop.current.contains(e.target);
-      const inMobile =
-        userMenuRefMobile.current &&
-        userMenuRefMobile.current.contains(e.target);
+      const inDesktop = userMenuRefDesktop.current?.contains(e.target);
+      const inMobile = userMenuRefMobile.current?.contains(e.target);
       if (!inDesktop && !inMobile) setUserMenuOpen(false);
     };
     if (userMenuOpen) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [userMenuOpen]);
 
-  
   useEffect(() => {
     const onDocDown = (e) => {
-      const inMenu =
-        shopMenuRef.current && shopMenuRef.current.contains(e.target);
-      const inToggle =
-        shopToggleRef.current && shopToggleRef.current.contains(e.target);
+      const inMenu = shopMenuRef.current?.contains(e.target);
+      const inToggle = shopToggleRef.current?.contains(e.target);
       if (!inMenu && !inToggle) setShopOpen(false);
     };
     if (isShopOpen) document.addEventListener("mousedown", onDocDown);
     return () => document.removeEventListener("mousedown", onDocDown);
   }, [isShopOpen]);
 
-  
   useEffect(() => {
-    const onDocDown = (e) => {
-      const inMenu = cartMenuRef.current && cartMenuRef.current.contains(e.target);
-      const inToggle =
-        cartToggleRef.current && cartToggleRef.current.contains(e.target);
+    const onDown = (e) => {
+      const inMenu = cartContainerRef.current?.contains(e.target);
+      const inToggle = cartToggleRef.current?.contains(e.target);
       if (!inMenu && !inToggle) setCartOpen(false);
     };
-    if (cartOpen) document.addEventListener("mousedown", onDocDown);
-    return () => document.removeEventListener("mousedown", onDocDown);
+    if (cartOpen) document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
   }, [cartOpen]);
-
 
   useEffect(() => {
     const unlisten = history.listen(() => {
       setShopOpen(false);
+      setCartOpen(false);
       setUserMenuOpen(false);
       setMobileMenuOpen(false);
-      setCartOpen(false);
     });
     return () => unlisten && unlisten();
   }, [history]);
-
-  const handleLogout = (e) => {
-    e?.preventDefault?.();
-    dispatch({ type: CLIENT_SET_USER, payload: null });
-    localStorage.removeItem("token");
-    setUserMenuOpen(false);
-    setMobileMenuOpen(false);
-    try {
-      history.replace("/");
-    } catch (_) {}
-    setTimeout(() => {
-      if (window.location.pathname !== "/") window.location.assign("/");
-    }, 10);
-  };
 
   const normalize = (s = "") =>
     String(s)
@@ -125,10 +100,8 @@ export default function Header() {
       .replaceAll("ç", "c")
       .replaceAll("ö", "o")
       .replaceAll("ü", "u");
-
   const slugify = (s = "") =>
     normalize(s).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-
   const getImg = (c) =>
     c?.img ||
     c?.image ||
@@ -137,8 +110,7 @@ export default function Header() {
     c?.thumbnail ||
     c?.icon ||
     c?.logo ||
-    "data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\"><rect width=\"20\" height=\"20\" fill=\"%23e5e7eb\"/></svg>";
-
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><rect width='20' height='20' fill='%23e5e7eb'/></svg>";
   const getName = (c) =>
     c?.name ??
     c?.title ??
@@ -152,7 +124,10 @@ export default function Header() {
   const hasWomanFlag = (c) => {
     const g = normalize(c?.gender || c?.sex || c?.type || "");
     return (
-      g.includes("kadin") || g.includes("women") || g.includes("woman") || g.includes("female")
+      g.includes("kadin") ||
+      g.includes("women") ||
+      g.includes("woman") ||
+      g.includes("female")
     );
   };
   const hasManFlag = (c) => {
@@ -161,7 +136,6 @@ export default function Header() {
       g.includes("erkek") || g.includes("men") || g.includes("man") || g.includes("male")
     );
   };
-
   const isIdWoman = (id) => Number(id) >= 1 && Number(id) <= 8;
   const isIdMan = (id) => Number(id) >= 9 && Number(id) <= 14;
 
@@ -213,20 +187,22 @@ export default function Header() {
     setCartOpen(false);
   };
 
-  
   const parsePrice = (v) => {
     if (v == null) return 0;
     if (typeof v === "number") return v;
-    const s = String(v).replaceAll(".", "").replace(",", ".").replace(/[^\d.-]/g, "");
+    const s = String(v).replaceAll(",", "").replace(/[^\d.-]/g, "");
     const n = parseFloat(s);
     return Number.isFinite(n) ? n : 0;
   };
-  const priceOf = (p) =>
-    parsePrice(p?.price ?? p?.unit_price ?? p?.amount ?? 0);
+  const priceOf = (p) => parsePrice(p?.price ?? p?.unit_price ?? p?.amount ?? 0);
+  const formatUSD = (n) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 
-  const totalPrice = cart.reduce((sum, it) => sum + (it?.count || 0) * priceOf(it?.product), 0);
+  const totalPrice = cart.reduce(
+    (sum, it) => sum + (it?.count || 0) * priceOf(it?.product),
+    0
+  );
 
- 
   const incItem = (pid) => {
     const next = cart.map((it) =>
       String(it?.product?.id) === String(pid)
@@ -247,9 +223,22 @@ export default function Header() {
     dispatch(setCart(next));
   };
 
+  const handleLogout = (e) => {
+    e?.preventDefault?.();
+    dispatch({ type: CLIENT_SET_USER, payload: null });
+    localStorage.removeItem("token");
+    setUserMenuOpen(false);
+    setMobileMenuOpen(false);
+    try {
+      history.replace("/");
+    } catch {}
+    setTimeout(() => {
+      if (window.location.pathname !== "/") window.location.assign("/");
+    }, 10);
+  };
+
   return (
     <header>
-    
       <div className="hidden md:block bg-[#2E2F41] text-white text-sm py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center px-4">
           <div className="flex items-center gap-4">
@@ -285,7 +274,6 @@ export default function Header() {
             </Link>
           </h1>
 
-         
           <nav className="hidden md:flex gap-4 text-gray-600 font-semibold text-sm relative">
             <Link to="/" className="hover:underline" onClick={closeAllMenus}>
               Home
@@ -375,7 +363,6 @@ export default function Header() {
             <Link to="/about" className="hover:text-black" onClick={closeAllMenus}>
               About
             </Link>
-
             <Link to="/contact" className="hover:text-black" onClick={closeAllMenus}>
               Contact
             </Link>
@@ -384,7 +371,6 @@ export default function Header() {
             </a>
           </nav>
 
-        
           <div className="hidden md:flex items-center gap-4">
             {user ? (
               <div className="relative" ref={userMenuRefDesktop}>
@@ -407,7 +393,6 @@ export default function Header() {
                   </span>
                   <ChevronDown size={16} className="text-[#252B42]" />
                 </button>
-
                 {userMenuOpen && (
                   <div className="absolute right-0 mt-2 w-44 bg-white border rounded-md shadow-lg z-50 py-2">
                     <button
@@ -422,7 +407,11 @@ export default function Header() {
               </div>
             ) : (
               <div className="flex items-center gap-1 text-sm">
-                <Link to="/login" className="flex items-center gap-1 text-[#23A6F0]" onClick={closeAllMenus}>
+                <Link
+                  to="/login"
+                  className="flex items-center gap-1 text-[#23A6F0]"
+                  onClick={closeAllMenus}
+                >
                   <User size={16} />
                   <span>Login</span>
                 </Link>
@@ -435,7 +424,6 @@ export default function Header() {
 
             <Search size={20} className="text-gray-600" />
 
-          
             <div className="relative" ref={cartToggleRef}>
               <button
                 type="button"
@@ -443,7 +431,7 @@ export default function Header() {
                 onClick={() => setCartOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={cartOpen}
-                title="Sepeti aç"
+                title="Open cart"
               >
                 <ShoppingCart size={20} className="text-gray-600" />
                 <span className="text-sm">{cartCount}</span>
@@ -451,18 +439,20 @@ export default function Header() {
 
               {cartOpen && (
                 <div
-                  ref={cartMenuRef}
+                  ref={cartContainerRef}
                   role="menu"
                   className="absolute right-0 mt-2 w-[340px] bg-white border rounded-md shadow-lg z-50 overflow-hidden"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="px-4 pt-3 pb-2 text-[14px] font-semibold text-[#252B42]">
-                    Sepetim ({cartCount} Ürün)
+                    My cart ({cartCount} items)
                   </div>
 
                   <div className="max-h-[360px] overflow-auto divide-y">
                     {cart.length === 0 ? (
-                      <div className="px-4 py-6 text-sm text-gray-500">Sepetiniz boş</div>
+                      <div className="px-4 py-6 text-sm text-gray-500">
+                        Your cart is empty
+                      </div>
                     ) : (
                       cart.map((item) => {
                         const p = item.product || {};
@@ -480,7 +470,11 @@ export default function Header() {
                           <div key={pid} className="flex gap-3 px-4 py-3 items-center">
                             <div className="w-12 h-12 rounded border overflow-hidden bg-gray-50 shrink-0">
                               {img ? (
-                                <img src={img} alt={title} className="w-full h-full object-cover" />
+                                <img
+                                  src={img}
+                                  alt={title}
+                                  className="w-full h-full object-cover"
+                                />
                               ) : null}
                             </div>
 
@@ -489,28 +483,27 @@ export default function Header() {
                                 {title}
                               </div>
                               <div className="text-xs text-gray-500">
-                                {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(price)}
+                                {formatUSD(price)}
                               </div>
                             </div>
 
-                        
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                aria-label="Azalt"
+                                aria-label="Decrease"
                                 onClick={() => decItem(pid)}
                                 className="w-7 h-7 rounded border grid place-items-center hover:bg-gray-50"
-                                title="Azalt"
                               >
                                 <Minus size={14} />
                               </button>
-                              <span className="w-6 text-center text-sm">{item.count}</span>
+                              <span className="w-6 text-center text-sm">
+                                {item.count}
+                              </span>
                               <button
                                 type="button"
-                                aria-label="Arttır"
+                                aria-label="Increase"
                                 onClick={() => incItem(pid)}
                                 className="w-7 h-7 rounded border grid place-items-center hover:bg-gray-50"
-                                title="Arttır"
                               >
                                 <Plus size={14} />
                               </button>
@@ -521,33 +514,31 @@ export default function Header() {
                     )}
                   </div>
 
-                
                   <div className="flex items-center justify-between px-4 py-3 border-t bg-white">
-                    <span className="text-sm font-semibold text-[#252B42]">Toplam</span>
-                    <span className="text-base font-bold text-[#F2994A]">
-                      {new Intl.NumberFormat("tr-TR", {
-                        style: "currency",
-                        currency: "TRY",
-                      }).format(totalPrice)}
+                    <span className="text-sm font-semibold text-[#252B42]">
+                      Total
+                    </span>
+                    <span className="text-base font-bold text-[#23A6F0]">
+                      {formatUSD(totalPrice)}
                     </span>
                   </div>
 
-             
                   <div className="flex gap-3 p-3 border-t bg-white">
                     <Link
                       to="/cart"
                       className="flex-1 border rounded px-4 py-2 text-sm font-semibold text-[#252B42] hover:bg-gray-50 text-center"
                       onClick={() => setCartOpen(false)}
                     >
-                      Sepete Git
+                      Go to Cart
                     </Link>
-                    <Link
-                      to="/checkout"
-                      className="flex-1 bg-[#F2994A] text-white rounded px-4 py-2 text-sm font-semibold text-center hover:opacity-90"
-                      onClick={() => setCartOpen(false)}
+                   <button
+                      type="button"
+                      onClick={goCheckout}
+                      className="flex-1 bg-[#23A6F0] text-white rounded px-4 py-2 text-sm font-semibold text-center hover:opacity-90"
                     >
-                      Siparişi Tamamla
-                    </Link>
+                      Checkout
+                    </button>
+
                   </div>
                 </div>
               )}
@@ -559,13 +550,135 @@ export default function Header() {
             </div>
           </div>
 
-  
-          <div className="flex md:hidden items-center gap-3">
-            <Search size={20} />
-            <ShoppingCart size={20} />
-            <Menu size={24} onClick={() => setMobileMenuOpen(true)} />
-          </div>
+         <div className="flex md:hidden items-center gap-3">
+           <Search size={20} />
+           <button
+             type="button"
+             onClick={() => setCartOpen(true)}
+             aria-label="Open cart"
+             className="flex items-center gap-1"
+           >
+             <ShoppingCart size={20} />
+             <span className="text-xs font-semibold">{cartCount}</span>
+           </button>
+           <Menu size={24} onClick={() => setMobileMenuOpen(true)} />
+         </div>
+
         </div>
+
+        {cartOpen && (
+          <div className="md:hidden fixed inset-0 z-[60]" role="dialog" aria-modal="true">
+            <div
+              className="absolute inset-0 bg-black/30"
+              onClick={() => setCartOpen(false)}
+            />
+            <div
+              ref={cartContainerRef}
+              className="absolute bottom-0 inset-x-0 bg-white rounded-t-2xl shadow-2xl max-h-[75vh] overflow-hidden"
+            >
+              <div className="px-5 pt-4 pb-3 flex items-center justify-between">
+                <div className="text-[15px] font-semibold text-[#252B42]">
+                  My cart ({cartCount} items)
+                </div>
+                <button
+                  className="p-1 rounded hover:bg-gray-100"
+                  onClick={() => setCartOpen(false)}
+                  aria-label="Close"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="max-h-[55vh] overflow-auto divide-y">
+                {cart.length === 0 ? (
+                  <div className="px-5 py-8 text-sm text-gray-500">Your cart is empty</div>
+                ) : (
+                  cart.map((item) => {
+                    const p = item.product || {};
+                    const pid = p.id;
+                    const title =
+                      p.name || p.title || p.label || `#${pid || ""}`;
+                    const img =
+                      p.image ||
+                      p.image_url ||
+                      p.imageUrl ||
+                      (Array.isArray(p.images) ? p.images[0] : null);
+                    const price = priceOf(p);
+
+                    return (
+                      <div key={pid} className="flex gap-3 px-5 py-4 items-center">
+                        <div className="w-14 h-14 rounded border overflow-hidden bg-gray-50 shrink-0">
+                          {img ? (
+                            <img
+                              src={img}
+                              alt={title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : null}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold text-[#252B42] truncate">
+                            {title}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {formatUSD(price)}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            aria-label="Decrease"
+                            onClick={() => decItem(pid)}
+                            className="w-8 h-8 rounded border grid place-items-center hover:bg-gray-50"
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <span className="w-7 text-center text-sm">
+                            {item.count}
+                          </span>
+                          <button
+                            type="button"
+                            aria-label="Increase"
+                            onClick={() => incItem(pid)}
+                            className="w-8 h-8 rounded border grid place-items-center hover:bg-gray-50"
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="flex items-center justify-between px-5 py-4 border-t bg-white">
+                <span className="text-sm font-semibold text-[#252B42]">Total</span>
+                <span className="text-base font-bold text-[#23A6F0]">
+                  {formatUSD(totalPrice)}
+                </span>
+              </div>
+
+              <div className="flex gap-3 p-4 border-t bg-white">
+                <Link
+                  to="/cart"
+                  className="flex-1 border rounded px-4 py-2 text-sm font-semibold text-[#252B42] hover:bg-gray-50 text-center"
+                  onClick={() => setCartOpen(false)}
+                >
+                  Go to Cart
+                </Link>
+                <button
+                       type="button"
+                       onClick={goCheckout}
+                       className="flex-1 bg-[#23A6F0] text-white rounded px-4 py-2 text-sm font-semibold text-center hover:opacity-90"
+                     >
+                       Checkout
+                     </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white px-4 pb-4">

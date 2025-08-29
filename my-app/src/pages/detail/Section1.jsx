@@ -65,11 +65,11 @@ export default function Section1({ product, fillMode = "cover", bg = "bg-[#FAFAF
           <button
             type="button"
             onClick={handleBack}
-            className="inline-flex items-center gap-2 text-[#23A6F0] font-medium hover:underline"
+            className="inline-flex items-center gap-2 bg-[#23A6F0] text-white px-3 py-1 rounded-md font-medium hover:opacity-90"
             title="Geri dön"
           >
             <span aria-hidden>←</span>
-            <span>Geri dön</span>
+            <span>Go back</span>
           </button>
         </div>
 
@@ -142,7 +142,7 @@ export default function Section1({ product, fillMode = "cover", bg = "bg-[#FAFAF
               />
 
               <IconBtn title="Wishlist" imgSrc="/icons/actions/heart.png" btnClass="w-12 h-12 md:w-9 md:h-9" imgClass="w-6 h-6 md:w-4 md:h-4" />
-              <IconBtn title="Watch" imgSrc="/icons/actions/eye.png" btnClass="w-12 h-12 md:w-9 md:h-9" imgClass="w-6 h-6 md:w-4 md:h-4" />
+            
             </div>
           </div>
         </div>

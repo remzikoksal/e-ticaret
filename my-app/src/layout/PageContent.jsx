@@ -11,6 +11,8 @@ import ScrollToTop from "./ScroolToTop";
 import Signup from "../pages/Signup";
 import RolesRedirect from "../pages/RolesRedirect";
 import Login from "../pages/Login";
+import Cart from "../pages/Cart";
+import Checkout from "../pages/Checkout";
 
 function PageContent() {
   return (
@@ -37,6 +39,8 @@ function PageContent() {
           <Route path="/signup" exact component={Signup} />
           <Route path="/roles" exact component={RolesRedirect} />
           <Route path="/login" exact component={Login} />
+          <Route path="/cart" exact component={Cart} />
+          <Route path="/checkout" exact component={Checkout} />
         </Switch>
       </main>
       <Footer />
