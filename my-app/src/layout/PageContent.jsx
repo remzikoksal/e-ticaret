@@ -13,6 +13,7 @@ import RolesRedirect from "../pages/RolesRedirect";
 import Login from "../pages/Login";
 import Cart from "../pages/Cart";
 import Checkout from "../pages/Checkout";
+import ProtectedRoute from "../routes/ProtectedRoute";
 
 function PageContent() {
   return (
@@ -40,7 +41,7 @@ function PageContent() {
           <Route path="/roles" exact component={RolesRedirect} />
           <Route path="/login" exact component={Login} />
           <Route path="/cart" exact component={Cart} />
-          <Route path="/checkout" exact component={Checkout} />
+          <ProtectedRoute path="/checkout" exact component={Checkout} />
         </Switch>
       </main>
       <Footer />
