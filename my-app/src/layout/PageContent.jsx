@@ -14,6 +14,7 @@ import Login from "../pages/Login";
 import Cart from "../pages/Cart";
 import Checkout from "../pages/Checkout";
 import ProtectedRoute from "../routes/ProtectedRoute";
+import OrderSuccess from "../pages/OrderSuccess";
 
 function PageContent() {
   return (
@@ -42,6 +43,7 @@ function PageContent() {
           <Route path="/login" exact component={Login} />
           <Route path="/cart" exact component={Cart} />
           <ProtectedRoute path="/checkout" exact component={Checkout} />
+          <ProtectedRoute path="/order-success" exact component={OrderSuccess} />
         </Switch>
       </main>
       <Footer />

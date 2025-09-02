@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/axios";
+import { useDispatch, useSelector } from "react-redux";
+import { useHistory } from "react-router-dom";
+import { setCart, setPayment, setAddress } from "../../store/actions/shoppingCartActions";
 
 const digitsOnly = (s = "") => s.replace(/\D/g, "");
 const idOf = (a) => a?.id ?? a?.cardId ?? a?.ID;
@@ -19,7 +22,12 @@ function readApiError(e, fallback) {
 }
 const thisYear = new Date().getFullYear();
 
-export default function PaymentStep({ onBack }) {
+export default function PaymentStep({ onBack, addressSelection }) {
+  const dispatch = useDispatch();
+  const history = useHistory();
+  const cart = useSelector((s) => s.shoppingCart?.cart || []);
+  const payment = useSelector((s) => s.shoppingCart?.payment || {}); 
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,6 +45,11 @@ export default function PaymentStep({ onBack }) {
     name_on_card: "",
   });
   const [fieldErrors, setFieldErrors] = useState({});
+  const [ccv, setCcv] = useState("");
+  const ccvValid = useMemo(
+    () => digitsOnly(ccv).length >= 3 && digitsOnly(ccv).length <= 4,
+    [ccv]
+  );
 
   useEffect(() => {
     (async () => {
@@ -57,6 +70,30 @@ export default function PaymentStep({ onBack }) {
     })();
   }, []);
 
+  const selectedItems = useMemo(() => cart.filter((i) => i?.checked), [cart]);
+
+  const productsPayload = useMemo(
+    () =>
+      selectedItems.map((it) => ({
+        product_id: it?.product?.id,
+        count: it?.count ?? 1,
+        detail: it?.detail || it?.product?.detail || "",
+      })),
+    [selectedItems]
+  );
+
+  const itemsTotal = useMemo(
+    () =>
+      selectedItems.reduce(
+        (sum, it) => sum + (Number(it?.product?.price) || 0) * (it?.count ?? 1),
+        0
+      ),
+    [selectedItems]
+  );
+
+  const shipping = Number(payment?.shippingPrice ?? payment?.shipping ?? 0);
+  const discount = Number(payment?.discount ?? 0);
+  const grandTotal = Math.max(0, itemsTotal + shipping - discount);
   const cardFormValid = useMemo(() => {
     const month = Number(form.expire_month);
     const year = Number(form.expire_year);
@@ -119,10 +156,9 @@ export default function PaymentStep({ onBack }) {
     setFieldErrors({});
   }
 
-  async function submit(e) {
+  async function submitCard(e) {
     e?.preventDefault?.();
     if (!validate()) return;
-    setLoading(true);
     setError("");
     try {
       if (editCard && idOf(editCard)) {
@@ -158,14 +194,11 @@ export default function PaymentStep({ onBack }) {
       closeForm();
     } catch (e) {
       setError(readApiError(e, "Kart kaydedilemedi."));
-    } finally {
-      setLoading(false);
     }
   }
 
-  async function remove(cid) {
+  async function removeCard(cid) {
     if (!cid) return;
-    setLoading(true);
     setError("");
     try {
       await api.delete(`/user/card/${cid}`);
@@ -176,8 +209,6 @@ export default function PaymentStep({ onBack }) {
       }
     } catch (e) {
       setError(readApiError(e, "Kart silinemedi."));
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -199,6 +230,76 @@ export default function PaymentStep({ onBack }) {
       } catch {
         setPaymentOptions([]);
       }
+    }
+  }
+
+  const selectedCard =
+    cards.find((c) => String(idOf(c)) === String(selectedCardId)) || null;
+
+  const canPlaceOrder =
+    selectedCard &&
+    ccvValid &&
+    productsPayload.length > 0 &&
+    addressSelection?.shippingId;
+
+  async function placeOrder() {
+    if (!canPlaceOrder) return;
+    setLoading(true);
+    setError("");
+    try {
+      const summarySnapshot = {
+        orderId: null, 
+        orderDate: new Date().toISOString(),
+        addressId: addressSelection.shippingId,
+        card: {
+          name: selectedCard.name_on_card,
+          last4: digitsOnly(selectedCard.card_no).slice(-4),
+        },
+        totals: {
+          itemsTotal,
+          shipping,
+          discount,
+          grandTotal,
+        },
+        items: selectedItems.map((it) => ({
+          id: it?.product?.id,
+          name: it?.product?.name || it?.product?.title,
+          image: it?.product?.images?.[0] || it?.product?.image || null,
+          price: Number(it?.product?.price) || 0,
+          count: it?.count ?? 1,
+          detail: it?.detail || it?.product?.detail || "",
+        })),
+      };
+
+      const payload = {
+        address_id: addressSelection.shippingId,
+        order_date: new Date().toISOString(),
+        card_no: digitsOnly(selectedCard.card_no),
+        card_name: selectedCard.name_on_card,
+        card_expire_month: Number(selectedCard.expire_month),
+        card_expire_year: Number(selectedCard.expire_year),
+        card_ccv: Number(digitsOnly(ccv)),
+        price: Number(grandTotal.toFixed(2)),
+        products: productsPayload,
+      };
+
+      const res = await api.post("/order", payload);
+      const server = res?.data?.data ?? res?.data ?? {};
+      const orderId = server?.id || server?.order_id;
+      const finalSummary = { ...summarySnapshot, orderId };
+      try {
+        sessionStorage.setItem("last_order", JSON.stringify(finalSummary));
+      } catch {}
+
+      dispatch(setCart([]));
+      dispatch(setPayment({}));
+      dispatch(setAddress({}));
+
+      history.push("/order-success", { orderId, orderSummary: finalSummary });
+    } catch (e) {
+      setError(readApiError(e, "Sipariş oluşturulamadı. Lütfen bilgileri kontrol edin."));
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -253,7 +354,7 @@ export default function PaymentStep({ onBack }) {
                         <button
                           type="button"
                           className="text-xs px-3 py-1 border rounded hover:bg-gray-50"
-                          onClick={() => remove(cid)}
+                          onClick={() => removeCard(cid)}
                         >
                           Delete
                         </button>
@@ -276,7 +377,7 @@ export default function PaymentStep({ onBack }) {
               Add New Card
             </button>
           ) : (
-            <form onSubmit={submit} className="bg-white border rounded-lg p-4 grid grid-cols-1 gap-4">
+            <form onSubmit={submitCard} className="bg-white border rounded-lg p-4 grid grid-cols-1 gap-4">
               <Field label="Card Number" hint="Yalnızca rakam (16 hane)" error={fieldErrors.card_no}>
                 <input
                   className="input"
@@ -314,11 +415,11 @@ export default function PaymentStep({ onBack }) {
                 </Field>
               </div>
 
-              <Field label="Name on Card" hint="Örn: Ali Baş" error={fieldErrors.name_on_card}>
+              <Field label="Name on Card"  error={fieldErrors.name_on_card}>
                 <input
                   className="input"
                   type="text"
-                  placeholder="Ali Baş"
+                  placeholder="Örn: Remzi Köksal"
                   value={form.name_on_card}
                   onChange={onChange("name_on_card")}
                   required
@@ -346,7 +447,7 @@ export default function PaymentStep({ onBack }) {
         </div>
       </section>
 
-
+    
       <section>
         <h3 className="text-base font-bold text-[#252B42] mb-3">Payment Options</h3>
         <div className="border rounded-lg p-4 bg-white min-h-[140px]">
@@ -370,6 +471,40 @@ export default function PaymentStep({ onBack }) {
           )}
         </div>
 
+     
+        <div className="mt-4 grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="CCV" hint="Kartın arkasındaki 3 haneli güvenlik kodu">
+              <input
+                className="input"
+                type="text"
+                inputMode="numeric"
+                placeholder="123"
+                value={ccv}
+                onChange={(e) => setCcv(digitsOnly(e.target.value).slice(0, 4))}
+                required
+              />
+            </Field>
+
+            <div className="border rounded-lg p-3 text-sm bg-white">
+              <div className="flex justify-between"><span>Products</span><b>${itemsTotal.toFixed(2)}</b></div>
+              <div className="flex justify-between"><span>Shipping</span><b>${shipping.toFixed(2)}</b></div>
+              <div className="flex justify-between"><span>Discount</span><b>- ${discount.toFixed(2)}</b></div>
+              <div className="h-px my-2 bg-gray-200" />
+              <div className="flex justify-between text-[#252B42] text-base font-bold">
+                <span>Grand Total</span><span>${grandTotal.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          {productsPayload.length === 0 && (
+            <div className="text-[13px] text-red-600">Sepete eklenmiş (ve seçili) ürün bulunmuyor.</div>
+          )}
+          {!addressSelection?.shippingId && (
+            <div className="text-[13px] text-red-600">Lütfen bir kargo adresi seçin.</div>
+          )}
+        </div>
+
         <div className="mt-6 flex items-center justify-between">
           <button
             type="button"
@@ -380,11 +515,11 @@ export default function PaymentStep({ onBack }) {
           </button>
           <button
             type="button"
-            disabled={!selectedCardId}
+            disabled={!canPlaceOrder || loading}
             className="px-6 py-2 rounded bg-[#23A6F0] text-white font-bold disabled:opacity-60"
-            onClick={() => alert("Next task: place order")}
+            onClick={placeOrder}
           >
-            Continue
+            {loading ? "Placing Order..." : "Place Order"}
           </button>
         </div>
       </section>

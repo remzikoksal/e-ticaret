@@ -3,11 +3,14 @@ import AddressStep from "./checkout/AddressStep";
 import PaymentStep from "./checkout/PaymentStep";
 
 export default function Checkout() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1); 
+  const [addressSelection, setAddressSelection] = useState({
+    shippingId: null,
+    receiptId: null,
+  });
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-8">
-  
       <div className="flex items-center gap-3 mb-6">
         <StepDot active={step === 1}>1</StepDot>
         <span className={step === 1 ? "font-bold text-[#252B42]" : "text-[#737373]"}>Address</span>
@@ -17,9 +20,17 @@ export default function Checkout() {
       </div>
 
       {step === 1 ? (
-        <AddressStep onContinue={() => setStep(2)} />
+        <AddressStep
+          onContinue={(sel) => {
+            setAddressSelection(sel);
+            setStep(2);
+          }}
+        />
       ) : (
-        <PaymentStep onBack={() => setStep(1)} />
+        <PaymentStep
+          addressSelection={addressSelection}
+          onBack={() => setStep(1)}
+        />
       )}
     </main>
   );

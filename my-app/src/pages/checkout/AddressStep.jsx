@@ -12,6 +12,7 @@ function readApiError(e, fallback) {
   return typeof msg === "string" ? msg : fallback;
 }
 
+
 const CITIES = [
   "Adana","Adıyaman","Afyonkarahisar","Ağrı","Aksaray","Amasya","Ankara","Antalya","Ardahan","Artvin",
   "Aydın","Balıkesir","Bartın","Batman","Bayburt","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa",
@@ -32,7 +33,7 @@ export default function AddressStep({ onContinue }) {
   const [receiptId, setReceiptId] = useState(null);
 
   const [showForm, setShowForm] = useState(false);
-  const [editAddr, setEditAddr] = useState(null); 
+  const [editAddr, setEditAddr] = useState(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -221,11 +222,11 @@ export default function AddressStep({ onContinue }) {
             onSubmit={submit}
             className="bg-white border rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4"
           >
-            <Field label="Address Title" hint="Örn: Ev adresi" error={fieldErrors.title}>
+            <Field label="Address Title" error={fieldErrors.title}>
               <input
                 className="input"
                 type="text"
-                placeholder="Ev adresi"
+                placeholder="Örn: Ev"
                 value={form.title}
                 onChange={onChangeField("title")}
                 required
@@ -234,43 +235,43 @@ export default function AddressStep({ onContinue }) {
 
             <Field
               label="Phone"
-              hint="Örn: 531 123 12 12"
+              hint=" Örn: +90 531 212 34 56"
               error={fieldErrors.phone}
             >
               <input
                 className="input"
                 type="tel"
                 inputMode="tel"
-                placeholder="+90 53 xxx xx xx"
+                placeholder="53x xxx xx xx"
                 value={form.phone}
                 onChange={onChangeField("phone")}
                 required
               />
             </Field>
 
-            <Field label="Name" hint="Örn: Remzi" error={fieldErrors.name}>
+            <Field label="Name"  error={fieldErrors.name}>
               <input
                 className="input"
                 type="text"
-                placeholder="İsim"
+                placeholder="Örn: Mehmet"
                 value={form.name}
                 onChange={onChangeField("name")}
                 required
               />
             </Field>
 
-            <Field label="Surname" hint="Örn: Köksal" error={fieldErrors.surname}>
+            <Field label="Surname"  error={fieldErrors.surname}>
               <input
                 className="input"
                 type="text"
-                placeholder="Soy isim"
+                placeholder="Örn: Gezer"
                 value={form.surname}
                 onChange={onChangeField("surname")}
                 required
               />
             </Field>
 
-            <Field label="City"  error={fieldErrors.city}>
+            <Field label="City" hint="Şehri listeden seçin" error={fieldErrors.city}>
               <select
                 className="input"
                 value={form.city}
@@ -286,11 +287,11 @@ export default function AddressStep({ onContinue }) {
               </select>
             </Field>
 
-            <Field label="District" hint="Örn: Esenler" error={fieldErrors.district}>
+            <Field label="District"  error={fieldErrors.district}>
               <input
                 className="input"
                 type="text"
-                placeholder="İlçe"
+                placeholder="Örn: Esenler"
                 value={form.district}
                 onChange={onChangeField("district")}
                 required
@@ -305,7 +306,7 @@ export default function AddressStep({ onContinue }) {
               >
                 <textarea
                   className="input min-h-[84px]"
-                  placeholder="Örn: Barbaros Cd. No:12 Kat:3 Daire:5"
+                  placeholder="Örn: Sağdık Cd. No:3 Kat:2 Daire:4"
                   value={form.neighborhood}
                   onChange={onChangeField("neighborhood")}
                   required
@@ -338,7 +339,9 @@ export default function AddressStep({ onContinue }) {
           type="button"
           disabled={!canNext || loading}
           className="px-6 py-2 rounded bg-[#23A6F0] text-white font-bold disabled:opacity-60"
-          onClick={() => onContinue?.()}
+          onClick={() =>
+            onContinue?.({ shippingId, receiptId })
+          }
         >
           Continue
         </button>
@@ -347,7 +350,6 @@ export default function AddressStep({ onContinue }) {
   );
 }
 
-// --- küçük bileşenler ---
 function Field({ label, children, hint, error }) {
   return (
     <label className="block">
