@@ -372,40 +372,55 @@ export default function Header() {
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
-            {user ? (
-              <div className="relative" ref={userMenuRefDesktop}>
-                <button
-                  type="button"
-                  className="flex items-center gap-2"
-                  onClick={() => setUserMenuOpen((v) => !v)}
-                  aria-haspopup="menu"
-                  aria-expanded={userMenuOpen}
-                >
-                  <Gravatar
-                    email={user.email}
-                    size={28}
-                    className="rounded-full"
-                    default="mp"
-                    alt={user.name || user.email}
-                  />
-                  <span className="text-sm font-medium text-[#252B42]">
-                    {user.name || user.email}
-                  </span>
-                  <ChevronDown size={16} className="text-[#252B42]" />
-                </button>
-                {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-44 bg-white border rounded-md shadow-lg z-50 py-2">
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="w-full text-left text-red-500 px-4 py-2 text-sm hover:bg-gray-100"
-                    >
-                      Logout
-                    </button>
-                    
-                  </div>
-                )}
-              </div>
+  {user ? (
+    <div className="relative" ref={userMenuRefDesktop}>
+      <button
+        type="button"
+        className="flex items-center gap-2"
+        onClick={() => setUserMenuOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={userMenuOpen}
+      >
+        <Gravatar
+          email={user.email}
+          size={28}
+          className="rounded-full"
+          default="mp"
+          alt={user.name || user.email}
+        />
+        <span className="text-sm font-medium text-[#252B42]">
+          {user.name || user.email}
+        </span>
+        <ChevronDown size={16} className="text-[#252B42]" />
+      </button>
+
+      {userMenuOpen && (
+        <div
+          className="absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg z-50 py-2"
+          role="menu"
+        >
+          <Link
+            to="/orders"
+            className="block px-4 py-2 text-sm hover:bg-gray-100"
+            onClick={() => setUserMenuOpen(false)}
+            role="menuitem"
+          >
+            Previous Orders
+          </Link>
+
+          <div className="my-1 h-px bg-gray-200" />
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full text-left text-red-500 px-4 py-2 text-sm hover:bg-gray-100"
+            role="menuitem"
+          >
+            Logout
+          </button>
+        </div>
+      )}
+    </div>
             ) : (
               <div className="flex items-center gap-1 text-sm">
                 <Link

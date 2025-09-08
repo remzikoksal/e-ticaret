@@ -15,6 +15,7 @@ import Cart from "../pages/Cart";
 import Checkout from "../pages/Checkout";
 import ProtectedRoute from "../routes/ProtectedRoute";
 import OrderSuccess from "../pages/OrderSuccess";
+import PreviousOrders from "../pages/PreviousOrders";
 
 function PageContent() {
   return (
@@ -44,6 +45,7 @@ function PageContent() {
           <Route path="/cart" exact component={Cart} />
           <ProtectedRoute path="/checkout" exact component={Checkout} />
           <ProtectedRoute path="/order-success" exact component={OrderSuccess} />
+          <ProtectedRoute path="/orders" exact component={PreviousOrders} />
         </Switch>
       </main>
       <Footer />
